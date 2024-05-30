@@ -3,14 +3,20 @@ import pandas as pd
 import pickle
 from sklearn.preprocessing import StandardScaler
 
-# 确定模型和标准化器文件的路径
+# 加载模型和标准化器
 model_path = "treebag_model.pkl"
 scaler_path = "scaler.pkl"
 
-# 加载模型和标准化器
 with open(model_path, 'rb') as model_file, open(scaler_path, 'rb') as scaler_file:
     model = pickle.load(model_file)
     scaler = pickle.load(scaler_file)
+
+# 尝试从标准化器中获取特征名称
+try:
+    feature_names = scaler.feature_names_in_
+except AttributeError:
+    # 如果标准化器中没有保存特征名称，手动提供
+    feature_names = ["age", "WBC (10^9/L)", "Lym (10^9/L)", "CO2-Bp(mmol/L)", "Eos", "SBP(mmHg)", "β-receptor blocker(1yes，0no)", "surgery therapy(1yes,0no)"]
 
 # 创建Web应用的标题
 st.title('Machine learning-based model predicts 1-year mortality in patients with type A aortic dissection')
@@ -47,9 +53,6 @@ normal_ranges = {
     "SBP(mmHg)": (110, 130)
 }
 
-# 特征名称列表
-feature_names = ["age", "WBC (10^9/L)", "Lym (10^9/L)", "CO2-Bp(mmol/L)", "Eos", "SBP(mmHg)", "β-receptor blocker(1yes，0no)", "surgery therapy(1yes,0no)"]
-
 # 当用户提交表单时
 if submit_button:
     # 构建请求数据
@@ -68,8 +71,10 @@ if submit_button:
         # 将数据转换为DataFrame并指定列名顺序
         data_df = pd.DataFrame([data], columns=feature_names)
 
+
         # 应用标准化
         data_scaled = scaler.transform(data_df)
+     
 
         # 进行预测
         prediction = model.predict_proba(data_scaled)[:, 1][0]  # 获取类别为1的预测概率
