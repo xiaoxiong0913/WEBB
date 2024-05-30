@@ -1,11 +1,22 @@
 import streamlit as st
 import pandas as pd
 import pickle
-import joblib
+from sklearn.preprocessing import StandardScaler
 
 # 加载模型和标准化器
-model = joblib.load('treebag_model.pkl')
-scaler = joblib.load('scaler.pkl')
+model_path = "C:\\Users\\14701\\Desktop\\WEBB\\treebag_model.pkl"
+scaler_path = "C:\\Users\\14701\\Desktop\\WEBB\\scaler.pkl"
+
+with open(model_path, 'rb') as model_file, open(scaler_path, 'rb') as scaler_file:
+    model = pickle.load(model_file)
+    scaler = pickle.load(scaler_file)
+
+# 尝试从标准化器中获取特征名称
+try:
+    feature_names = scaler.feature_names_in_
+except AttributeError:
+    # 如果标准化器中没有保存特征名称，手动提供
+    feature_names = ["age", "WBC (10^9/L)", "Lym (10^9/L)", "CO2-Bp(mmol/L)", "Eos", "SBP(mmHg)", "β-receptor blocker(1yes，0no)", "surgery therapy(1yes,0no)"]
 
 # 创建Web应用的标题
 st.title('Machine learning-based model predicts 1-year mortality in patients with type A aortic dissection')
@@ -56,18 +67,23 @@ if submit_button:
         "surgery therapy(1yes,0no)": surgery
     }
 
-    # 将数据转换为DataFrame并进行标准化
     try:
-        data_df = pd.DataFrame([data])
-        data_scaled = scaler.transform(data_df)
-        prediction = model.predict_proba(data_scaled)[:, 1]  # 获取类别为1的预测概率
+        # 将数据转换为DataFrame并指定列名顺序
+        data_df = pd.DataFrame([data], columns=feature_names)
+        st.write("输入数据：", data_df)
 
-        # 显示预测结果，格式化为百分比
-        risk_score = prediction[0] * 100
-        st.write(f'Prediction (Probability of being high risk): {risk_score:.2f}%')
+        # 应用标准化
+        data_scaled = scaler.transform(data_df)
+        st.write("标准化后的数据：", data_scaled)
+
+        # 进行预测
+        prediction = model.predict_proba(data_scaled)[:, 1][0]  # 获取类别为1的预测概率
+
+        # 显示预测结果
+        st.write(f'Prediction: {prediction * 100:.2f}%')  # 将概率转换为百分比
 
         # 提供个性化建议
-        if risk_score >= 37.9:
+        if prediction >= 0.379:
             st.markdown(
                 "<span style='color:red'>High risk: This patient is classified as a high-risk patient.</span>",
                 unsafe_allow_html=True)
@@ -77,7 +93,7 @@ if submit_button:
                 value = data[feature]
                 if value < normal_min:
                     st.markdown(
-                        f"<span style='color:red'>{feature}: Your value is {value}. It is lower than the normal range ({normal_min} - {normal_max}). Consider increasing it towards {normal_min}.</span>",
+                        f"<span style='color:red'>{feature}: Your value is {value}. It is lower than the normal range ({normal_min} - {normal_max}). Consider increasing it towards {normal_min}。</span>",
                         unsafe_allow_html=True)
                 elif value > normal_max:
                     st.markdown(
@@ -93,7 +109,7 @@ if submit_button:
                 st.write("Consider undergoing surgery therapy.")
         else:
             st.markdown(
-                "<span style='color:green'>Low risk: This patient is classified as a low-risk patient.</span>",
+                "<span style='color:green'>Low risk: This patient is classified as a low-risk patient。</span>",
                 unsafe_allow_html=True)
     except Exception as e:
         st.write(f'Error: {str(e)}')
