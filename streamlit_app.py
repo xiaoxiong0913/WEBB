@@ -16,7 +16,8 @@ try:
     feature_names = scaler.feature_names_in_
 except AttributeError:
     # 如果标准化器中没有保存特征名称，手动提供
-    feature_names = ["age", "WBC (10^9/L)", "Lym (10^9/L)", "CO2-Bp(mmol/L)", "Eos", "SBP(mmHg)", "β-receptor blocker(1yes，0no)", "surgery therapy(1yes,0no)"]
+    feature_names = ["age", "WBC (10^9/L)", "Lym (10^9/L)", "CO2-Bp(mmol/L)", "Eos", "SBP(mmHg)",
+                     "β-receptor blocker(1yes，0no)", "surgery therapy(1yes,0no)"]
 
 # 创建Web应用的标题
 st.title('Machine learning-based model predicts 1-year mortality in patients with type A aortic dissection')
@@ -24,7 +25,7 @@ st.title('Machine learning-based model predicts 1-year mortality in patients wit
 # 添加介绍部分
 st.markdown("""
 ## Introduction
-This web-based calculator was developed based on the Treebag model with an AUC of 0.94 (95% CI: 0.896-0.966) and a Brier score of 0.128. Users can obtain the 1-year risk of death for a given case by simply selecting the parameters and clicking on the "Predict" button.
+This web-based calculator was developed based on the Treebag model with an AUC of 0.91 (95% CI: 0.841 to 0.962) and a Brier score of 0.128. Users can obtain the 1-year risk of death for a given case by simply selecting the parameters and clicking on the "Predict" button.
 """)
 
 # 创建输入表单
@@ -46,9 +47,9 @@ with st.form("prediction_form"):
 
 # 定义正常值范围
 normal_ranges = {
-    "WBC (10^9/L)": (4.5, 10.5),
+    "WBC (10^9/L)": (4.0, 11),
     "Lym (10^9/L)": (1.0, 3.5),
-    "CO2-Bp(mmol/L)": (23.0, 30.0),
+    "CO2-Bp(mmol/L)": (22.0, 30.0),
     "Eos": (0.02, 0.5),
     "SBP(mmHg)": (110, 130)
 }
@@ -71,10 +72,8 @@ if submit_button:
         # 将数据转换为DataFrame并指定列名顺序
         data_df = pd.DataFrame([data], columns=feature_names)
 
-
         # 应用标准化
         data_scaled = scaler.transform(data_df)
-     
 
         # 进行预测
         prediction = model.predict_proba(data_scaled)[:, 1][0]  # 获取类别为1的预测概率
