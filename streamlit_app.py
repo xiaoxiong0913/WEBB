@@ -1,7 +1,12 @@
-import streamlit as st
-import pandas as pd
+import os
 import pickle
+import pandas as pd
+import streamlit as st
 from sklearn.preprocessing import StandardScaler
+import warnings
+
+# 处理版本警告
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 
 # 加载模型和标准化器
 model_path = "treebag_model.pkl"
